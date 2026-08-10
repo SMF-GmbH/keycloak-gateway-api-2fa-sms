@@ -25,7 +25,7 @@ SMS gateway.
 
 ## Requirements
 
-- Java 17
+- Java 21
 - Maven 3.9+
 - Keycloak 26.7.0 (server-side dependencies are `provided` scope)
 
