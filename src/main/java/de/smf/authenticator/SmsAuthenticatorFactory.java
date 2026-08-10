@@ -62,12 +62,12 @@ public class SmsAuthenticatorFactory implements AuthenticatorFactory {
         return List.of(
                 new ProviderConfigProperty(SmsConstants.CONFIG_API_URL, "API URL", "URL under which the SMS Gateway is reachable.", ProviderConfigProperty.STRING_TYPE, "https://messaging.gatewayapi.eu"),
                 new ProviderConfigProperty(SmsConstants.CONFIG_API_TOKEN, "API Token", "Token for authentication with SMS Gateway.", ProviderConfigProperty.PASSWORD, "", true),
-                new ProviderConfigProperty(SmsConstants.CONFIG_CODE_LENGTH, "Code length", "The number of digits of the generated code.", ProviderConfigProperty.STRING_TYPE, 8),
+                new ProviderConfigProperty(SmsConstants.CONFIG_CODE_LENGTH, "Code length", "The number of digits of the generated code.", ProviderConfigProperty.STRING_TYPE, "8"),
                 new ProviderConfigProperty(SmsConstants.CONFIG_CODE_TTL, "Time-to-live (seconds)", "The time to live in seconds for the code to be valid.", ProviderConfigProperty.STRING_TYPE, "250"),
                 new ProviderConfigProperty(SmsConstants.CONFIG_SENDER_ID, "Sender ID", "The sender ID is displayed as the message sender on the receiving device.", ProviderConfigProperty.STRING_TYPE, "SMF GmbH"),
                 new ProviderConfigProperty(SmsConstants.CONFIG_DEFAULT_REGION, "Default phone region", "ISO 3166-1 alpha-2 region used for national phone numbers.", ProviderConfigProperty.STRING_TYPE, "DE"),
                 new ProviderConfigProperty(SmsConstants.CONFIG_MAX_ATTEMPTS, "Maximum attempts", "Maximum number of invalid OTP submissions before the challenge is consumed.", ProviderConfigProperty.STRING_TYPE, "5"),
-                new ProviderConfigProperty(SmsConstants.CONFIG_RESEND_COOLDOWN, "Resend cooldown (seconds)", "Minimum wait time before another SMS can be sent.", ProviderConfigProperty.STRING_TYPE, "40"),
+                new ProviderConfigProperty(SmsConstants.CONFIG_RESEND_COOLDOWN, "Resend cooldown (seconds)", "Minimum wait time before another SMS can be sent.", ProviderConfigProperty.STRING_TYPE, "20"),
                 new ProviderConfigProperty(SmsConstants.CONFIG_DEBUG_MODE, "Debug mode", "If enabled, no SMS is sent via the gateway. Instead the OTP is written to the Keycloak server log as <username>/<otp>. Do not enable in production.", ProviderConfigProperty.BOOLEAN_TYPE, false)
         );
     }

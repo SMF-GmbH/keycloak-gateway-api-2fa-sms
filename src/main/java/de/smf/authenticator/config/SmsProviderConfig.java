@@ -13,12 +13,12 @@ import java.util.Map;
  */
 public class SmsProviderConfig {
     private static final String DEFAULT_API_URL = "https://messaging.gatewayapi.eu";
-    private static final int DEFAULT_CODE_LENGTH = 6;
-    private static final int DEFAULT_CODE_TTL = 300;
+    private static final int DEFAULT_CODE_LENGTH = 8;
+    private static final int DEFAULT_CODE_TTL = 250;
     private static final String DEFAULT_SENDER_ID = "SMF GmbH";
     public static final String DEFAULT_REGION = "DE";
     private static final int DEFAULT_MAX_ATTEMPTS = 5;
-    private static final int DEFAULT_RESEND_COOLDOWN = 60;
+    private static final int DEFAULT_RESEND_COOLDOWN = 20;
 
     private final Map<String, String> config;
     private final String apiUrl;
