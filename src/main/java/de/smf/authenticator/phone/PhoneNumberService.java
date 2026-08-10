@@ -30,7 +30,11 @@ public class PhoneNumberService {
                 throw new IllegalArgumentException("phone number is not valid");
             }
             String e164 = phoneNumberUtil.format(parsed, PhoneNumberUtil.PhoneNumberFormat.E164);
-            return new NormalizedPhoneNumber(e164, e164.substring(1));
+            try {
+                return new NormalizedPhoneNumber(e164, Long.parseLong(e164.substring(1)));
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("phone number could not be converted to a gateway recipient", e);
+            }
         } catch (NumberParseException e) {
             throw new IllegalArgumentException("phone number could not be parsed", e);
         }

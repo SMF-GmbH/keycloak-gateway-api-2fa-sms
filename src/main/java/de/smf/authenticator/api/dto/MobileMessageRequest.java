@@ -7,5 +7,5 @@ package de.smf.authenticator.api.dto;
  * @param recipient the recipient's phone number in the gateway's expected format (E.164 digits, no leading {@code +})
  * @param message   the SMS message body
  */
-public record MobileMessageRequest(String sender, String recipient, String message) {
+public record MobileMessageRequest(String sender, long recipient, String message) {
 }

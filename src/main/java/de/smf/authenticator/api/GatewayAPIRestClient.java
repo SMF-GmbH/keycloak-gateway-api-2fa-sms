@@ -26,7 +26,7 @@ public class GatewayAPIRestClient implements SmsSender {
 
     /// See https://gatewayapi.com/docs/message/overview/
     @Override
-    public void sendViaSms(SmsProviderConfig config, String recipient, String smsText) {
+    public void sendViaSms(SmsProviderConfig config, long recipient, String smsText) {
         MobileMessageRequest body = new MobileMessageRequest(
                 config.getSenderId(),
                 recipient,
@@ -47,11 +47,13 @@ public class GatewayAPIRestClient implements SmsSender {
         }
     }
 
-    private static String maskRecipient(String recipient) {
-        if (recipient == null || recipient.length() < 4) {
+    
+    private static String maskRecipient(long recipient) {
+        String digits = Long.toString(recipient);
+        if (digits.length() < 4) {
             return "***";
         }
-        return "***" + recipient.substring(recipient.length() - 4);
+        return "***" + digits.substring(digits.length() - 4);
     }
 
     private static String sanitizeGatewayBody(String body) {

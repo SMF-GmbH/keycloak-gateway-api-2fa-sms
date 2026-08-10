@@ -6,5 +6,5 @@ package de.smf.authenticator.phone;
  * @param e164             the number in E.164 format (e.g. {@code +491701234567})
  * @param gatewayRecipient the number as expected by the GatewayAPI recipient field (E.164 without the leading {@code +})
  */
-public record NormalizedPhoneNumber(String e164, String gatewayRecipient) {
+public record NormalizedPhoneNumber(String e164, long gatewayRecipient) {
 }

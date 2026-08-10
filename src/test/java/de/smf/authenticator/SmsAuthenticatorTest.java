@@ -35,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.keycloak.representations.IDToken.PHONE_NUMBER;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -46,7 +47,7 @@ import static org.mockito.Mockito.when;
 class SmsAuthenticatorTest {
 
     private static final String PHONE_NUMBER_RAW = "+49 151 12345678";
-    private static final String PHONE_NUMBER_GATEWAY = "4915112345678";
+    private static final long PHONE_NUMBER_GATEWAY = 4915112345678L;
     private static final String OTP_PREFIX = "sms_login";
 
     private SmsSender smsSender;
@@ -96,7 +97,7 @@ class SmsAuthenticatorTest {
 
         authenticator.authenticate(context);
 
-        verify(smsSender, never()).sendViaSms(any(), anyString(), anyString());
+        verify(smsSender, never()).sendViaSms(any(), anyLong(), anyString());
         verify(form).createForm("login-sms.ftl");
         verify(context).challenge(any());
         verify(context, never()).failureChallenge(any(), any());
@@ -106,7 +107,7 @@ class SmsAuthenticatorTest {
     void authenticate_clientThrows_failsWithInternalError() throws Exception {
         stubAuthenticateHappyPath();
         doThrow(new RuntimeException("gateway down"))
-                .when(smsSender).sendViaSms(any(), anyString(), anyString());
+                .when(smsSender).sendViaSms(any(), anyLong(), anyString());
 
         authenticator.authenticate(context);
 
@@ -202,7 +203,7 @@ class SmsAuthenticatorTest {
             "'0151 12345678',     '+4915112345678', '4915112345678'",
             "'+1 415 555 2671',   '+14155552671',   '14155552671'"
     })
-    void phoneNumberService_normalizesToE164AndGatewayRecipient(String input, String e164, String gatewayRecipient) {
+    void phoneNumberService_normalizesToE164AndGatewayRecipient(String input, String e164, long gatewayRecipient) {
         var normalized = new PhoneNumberService().normalize(input, "DE");
 
         assertEquals(e164, normalized.e164());

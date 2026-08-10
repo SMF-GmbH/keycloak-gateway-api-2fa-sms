@@ -7,5 +7,5 @@ import de.smf.authenticator.config.SmsProviderConfig;
  * implementation to be swapped out (e.g. for testing or an alternative provider).
  */
 public interface SmsSender {
-    void sendViaSms(SmsProviderConfig config, String recipient, String smsText);
+    void sendViaSms(SmsProviderConfig config, long recipient, String smsText);
 }
