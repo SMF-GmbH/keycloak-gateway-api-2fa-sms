@@ -24,3 +24,6 @@ jobs:
 
       - name: Run tests
         run: mvn -B test
+
+      - name: Package
+        run: mvn -B package -DskipTests
