@@ -17,7 +17,7 @@ services:
     restart: unless-stopped
     command: start
     ports:
-      - "8081:8080"
+      - "8080:8080"
       - "5005:5005"
     environment:
       KC_CACHE: local
