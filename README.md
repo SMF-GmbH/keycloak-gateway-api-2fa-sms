@@ -13,12 +13,12 @@ SMS gateway.
 - Phone numbers are parsed and validated with [libphonenumber](https://github.com/google/libphonenumber) and normalized to E.164.
 - Enforces an HTTPS-only gateway URL.
 - Optional debug mode for local testing without sending real SMS messages.
-- Localized login page and messages (English and German included).
+- Localized login page and messages (English, German, and French included).
 
 ## How it works
 
 1. During authentication, `SmsAuthenticator` reads the authenticated user's `phoneNumber` attribute and normalizes it against the configured default region.
-2. A random OTP code is generated (`SmsProviderConfig.CONFIG_CODE_LENGTH` digits) and its salted hash is stored on the authentication session, along with an expiry timestamp and an attempt counter.
+2. A random OTP code of the configured `length` is generated and its salted hash is stored as an auth note on the authentication session, along with an expiry timestamp, an attempt counter, and the send timestamp used for resend throttling.
 3. The code is sent to the user via GatewayAPI's `/mobile/single` endpoint, using the message template `smsAuthText`.
 4. The user is presented with the `login-sms.ftl` form to enter the received code.
 5. On submission, the entered code is hashed and compared against the stored hash. The flow succeeds on a match; otherwise the attempt counter is incremented, and the challenge is invalidated after too many failed attempts or on expiry.
@@ -27,7 +27,7 @@ SMS gateway.
 
 - Java 21
 - Maven 3.9+
-- Keycloak 26.7.0 (server-side dependencies are `provided` scope)
+- Keycloak 26.7.1 (server-side dependencies are `provided` scope)
 
 ## Building
 
@@ -47,7 +47,7 @@ This produces a shaded JAR at `target/de.smf-SmsAuthenticator.jar` (the `libphon
 3. Restart Keycloak.
 4. In the Admin Console, go to **Authentication**, duplicate or edit a browser flow, and add the **SMS Authentication** execution step (category: OTP).
 5. Click the gear icon next to the step to configure it (see below).
-6. Set the step's requirement to **Required**.
+6. Set the step's requirement to **Required** (or **Alternative**, if it sits next to other second-factor options).
 
 Users must have a valid phone number set in the `phoneNumber` attribute of their account for this step to apply (`configuredFor` returns `false`, and the step is skipped, if the attribute is missing or fails phone number validation).
 
@@ -58,7 +58,7 @@ These options are set on the authentication execution's config in the Admin Cons
 | Setting | Config key | Default | Description |
 |---|---|---|---|
 | API URL | `apiUrl` | `https://messaging.gatewayapi.eu` | Base URL of the SMS gateway. Must use HTTPS. |
-| API Token | `apiToken` | *(required)* | Bearer token used to authenticate with the SMS gateway. |
+| API Token | `apiToken` | *(required)* | Token used to authenticate with the SMS gateway, sent as `Authorization: Token <apiToken>`. |
 | Code length | `length` | `8` | Number of digits in the generated OTP (6–10). |
 | Time-to-live (seconds) | `ttl` | `250` | How long a generated code remains valid (60–600). |
 | Sender ID | `senderId` | `SMF GmbH` | Sender name shown on the recipient's device. |
@@ -77,7 +77,7 @@ User-facing text lives in `src/main/resources/theme-resources/messages/messages_
 mvn test
 ```
 
-Unit tests cover configuration validation, OTP challenge lifecycle (creation, verification, expiry, attempt limits, resend throttling), and the authenticator factory.
+Unit tests cover configuration validation, OTP challenge lifecycle (creation, verification, expiry, attempt limits, resend throttling), the authenticator's challenge and verification flow, and the authenticator factory.
 
 
 ## Support & Links
