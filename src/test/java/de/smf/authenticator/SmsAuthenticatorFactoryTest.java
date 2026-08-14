@@ -33,9 +33,10 @@ class SmsAuthenticatorFactoryTest {
     }
 
     @Test
-    void getRequirementChoices_onlyOffersRequiredAndDisabled() {
+    void getRequirementChoices_offersAllChoices() {
         assertEquals(
                 List.of(AuthenticationExecutionModel.Requirement.REQUIRED,
+                        AuthenticationExecutionModel.Requirement.ALTERNATIVE,
                         AuthenticationExecutionModel.Requirement.DISABLED),
                 List.of(factory.getRequirementChoices()));
     }
