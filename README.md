@@ -71,6 +71,8 @@ These options are set on the authentication execution's config in the Admin Cons
 
 User-facing text lives in `src/main/resources/theme-resources/messages/messages_*.properties` and the login form in `src/main/resources/theme-resources/templates/login-sms.ftl`. Add additional `messages_<locale>.properties` files to support more languages, and package the theme resources into your Keycloak theme to customize the look and feel.
 
+The `smsAuthText` key is the SMS body itself and is formatted with `String.format`: `%1$s` is the OTP code and `%2$d` the validity in whole minutes.
+
 ## Testing
 
 ```bash
@@ -79,6 +81,17 @@ mvn test
 
 Unit tests cover configuration validation, OTP challenge lifecycle (creation, verification, expiry, attempt limits, resend throttling), the authenticator's challenge and verification flow, and the authenticator factory.
 
+## Local development
+
+A Docker Compose setup builds the JAR and runs it in Keycloak against PostgreSQL:
+
+```bash
+docker compose up --build
+```
+
+- Admin Console: <http://localhost:8080> (`admin` / `admin`)
+- Remote JVM debugging is enabled on port `5005`.
+- `de.smf.authenticator` logs at `debug` level.
 
 ## Support & Links
 
