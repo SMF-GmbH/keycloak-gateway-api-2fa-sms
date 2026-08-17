@@ -93,6 +93,12 @@ docker compose up --build
 - Remote JVM debugging is enabled on port `5005`.
 - `de.smf.authenticator` logs at `debug` level.
 
+## Security-Advertise
+
+App-based one-time passwords (TOTP) and passkeys offer significantly stronger protection than SMS-based two-factor authentication.
+
+The core problem with SMS is that the security of your account depends on your mobile carrier. In a SIM-swapping attack, criminals use social engineering to convince a carrier to transfer your phone number to a device they control — and with it, every code sent to that number. Text messages are also transmitted unencrypted and can be intercepted through known weaknesses in mobile signalling protocols such as SS7. Because the codes arrive over a network you do not control, you have no way to detect or prevent this.
+
 ## Support & Links
 
 - [Keycloak Security Scanner](https://www.smf.de/keycloak-scanner/) – test your configuration for
