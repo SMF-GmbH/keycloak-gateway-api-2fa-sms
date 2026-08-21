@@ -100,6 +100,8 @@ User-facing text lives in `src/main/resources/theme-resources/messages/messages_
 
 The `smsAuthText` key is the SMS body itself and is formatted with `String.format`: `%1$s` is the OTP code and `%2$d` the validity in whole minutes.
 
+The `sms-authenticator-display-name` and `sms-authenticator-help-text` keys are the title and description shown on Keycloak's "Try another way" screen when more than one 2FA method is available. Keycloak derives both key names from the authenticator's provider ID, so they must keep the `sms-authenticator-` prefix as long as `SmsAuthenticatorFactory.PROVIDER_ID` is unchanged.
+
 ## Testing
 
 ```bash
