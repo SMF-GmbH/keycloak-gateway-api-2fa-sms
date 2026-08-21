@@ -1,0 +1,43 @@
+name: dev-keycloak-gateway-api-2fa-sms
+
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    volumes:
+      - db:/var/lib/postgresql
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+      POSTGRES_DB: keycloak
+
+  keycloak:
+    build:
+      context: .
+    restart: unless-stopped
+    command: start
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    environment:
+      KC_CACHE: local
+      KC_DB: postgres
+      KC_DB_URL_HOST: db
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_ENABLED: true
+      KC_HOSTNAME_STRICT: false
+
+      SMS_FALLBACK_REGION: DE
+      # SMS_FALLBACK_REGION_master: AT
+
+      KC_LOG_LEVEL: "info,de.smf.authenticator:debug"
+      DEBUG: true
+      DEBUG_SUSPEND: "n"
+      DEBUG_PORT: "*:5005"
+
+volumes:
+  db:
+    name: gateway-api-2fa-sms-db
