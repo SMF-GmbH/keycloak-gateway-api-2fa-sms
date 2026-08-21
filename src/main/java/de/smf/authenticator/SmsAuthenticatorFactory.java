@@ -26,12 +26,12 @@ public class SmsAuthenticatorFactory implements AuthenticatorFactory {
 
     @Override
     public String getDisplayType() {
-        return "SMS Authentication";
+        return "SMS Authentication (Gateway API)";
     }
 
     @Override
     public String getHelpText() {
-        return "Validates an OTP sent via SMS to the users mobile phone.";
+        return "Validates an OTP sent via SMS to the users mobile phone using the Gateway API SMS gateway.";
     }
 
     @Override

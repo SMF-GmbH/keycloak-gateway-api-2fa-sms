@@ -45,7 +45,7 @@ This produces a shaded JAR at `target/de.smf-SmsAuthenticator.jar` (the `libphon
    kc.sh build
    ```
 3. Restart Keycloak.
-4. In the Admin Console, go to **Authentication**, duplicate or edit a browser flow, and add the **SMS Authentication** execution step (category: OTP).
+4. In the Admin Console, go to **Authentication**, duplicate or edit a browser flow, and add the **SMS Authentication (Gateway API)** execution step (category: OTP).
 5. Click the gear icon next to the step to configure it (see below).
 6. Set the step's requirement to **Required** (or **Alternative**, if it sits next to other second-factor options).
 
