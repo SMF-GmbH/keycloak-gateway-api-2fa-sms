@@ -4,6 +4,8 @@
 <@layout.registrationLayout displayInfo=true; section>
     <#if section = "header">
         ${msg("smsAuthTitle",realm.displayName)}
+    <#elseif section = "show-username">
+        <span class="${properties.kcLoginMainFooterHelperText!}">${msg("smsAuthCodeTitle", realm.displayName)}</span>
     <#elseif section = "form">
         <form id="kc-sms-code-login-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
             <@field.input name="code" label=msg("smsAuthLabel") autocomplete="one-time-code" autofocus=true />
@@ -12,6 +14,6 @@
             </@buttons.actionGroup>
         </form>
     <#elseif section = "info" >
-        ${msg("smsAuthInstruction")}
+        <span class="${properties.kcLoginMainFooterHelperText!}">${msg("smsAuthInstruction")}</span>
     </#if>
 </@layout.registrationLayout>
