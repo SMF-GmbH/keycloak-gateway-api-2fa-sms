@@ -53,7 +53,6 @@ class SmsAuthenticatorFactoryTest {
                 SmsConstants.CONFIG_CODE_LENGTH,
                 SmsConstants.CONFIG_CODE_TTL,
                 SmsConstants.CONFIG_SENDER_ID,
-                SmsConstants.CONFIG_DEFAULT_REGION,
                 SmsConstants.CONFIG_MAX_ATTEMPTS,
                 SmsConstants.CONFIG_RESEND_COOLDOWN,
                 SmsConstants.CONFIG_DEBUG_MODE)));

@@ -30,6 +30,10 @@ services:
       KC_HTTP_ENABLED: true
       KC_HOSTNAME_STRICT: false
 
+      SMS_FALLBACK_REGION: DE
+      # Per realm, overrides the above: SMS_FALLBACK_REGION_<realmName>
+      # SMS_FALLBACK_REGION_master: AT
+
       KC_LOG_LEVEL: "info,de.smf.authenticator:debug"
       DEBUG: true
       DEBUG_SUSPEND: "n"

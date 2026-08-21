@@ -159,7 +159,6 @@ class OtpChallengeServiceTest {
         config.put(SmsConstants.CONFIG_CODE_LENGTH, "6");
         config.put(SmsConstants.CONFIG_CODE_TTL, "300");
         config.put(SmsConstants.CONFIG_SENDER_ID, "Test");
-        config.put(SmsConstants.CONFIG_DEFAULT_REGION, "DE");
         config.put(SmsConstants.CONFIG_MAX_ATTEMPTS, "5");
         config.put(SmsConstants.CONFIG_RESEND_COOLDOWN, "0");
         config.putAll(overrides);

@@ -16,7 +16,6 @@ public class SmsProviderConfig {
     private static final int DEFAULT_CODE_LENGTH = 8;
     private static final int DEFAULT_CODE_TTL = 250;
     private static final String DEFAULT_SENDER_ID = "SMF GmbH";
-    public static final String DEFAULT_REGION = "DE";
     private static final int DEFAULT_MAX_ATTEMPTS = 5;
     private static final int DEFAULT_RESEND_COOLDOWN = 20;
 
@@ -26,7 +25,6 @@ public class SmsProviderConfig {
     private final int codeLength;
     private final int codeTtl;
     private final String senderId;
-    private final String defaultRegion;
     private final int maxAttempts;
     private final int resendCooldownSeconds;
     private final boolean debugMode;
@@ -38,7 +36,6 @@ public class SmsProviderConfig {
         this.codeLength = intValue(SmsConstants.CONFIG_CODE_LENGTH, DEFAULT_CODE_LENGTH, 6, 10);
         this.codeTtl = intValue(SmsConstants.CONFIG_CODE_TTL, DEFAULT_CODE_TTL, 60, 600);
         this.senderId = valueOrDefault(SmsConstants.CONFIG_SENDER_ID, DEFAULT_SENDER_ID);
-        this.defaultRegion = valueOrDefault(SmsConstants.CONFIG_DEFAULT_REGION, DEFAULT_REGION).toUpperCase();
         this.maxAttempts = intValue(SmsConstants.CONFIG_MAX_ATTEMPTS, DEFAULT_MAX_ATTEMPTS, 1, 10);
         this.resendCooldownSeconds = intValue(SmsConstants.CONFIG_RESEND_COOLDOWN, DEFAULT_RESEND_COOLDOWN, 0, 600);
         this.debugMode = booleanValue(SmsConstants.CONFIG_DEBUG_MODE, false);
@@ -62,10 +59,6 @@ public class SmsProviderConfig {
 
     public String getSenderId() {
         return senderId;
-    }
-
-    public String getDefaultRegion() {
-        return defaultRegion;
     }
 
     public int getMaxAttempts() {

@@ -2,6 +2,7 @@ package de.smf.authenticator;
 
 import de.smf.authenticator.api.GatewayAPIRestClient;
 import de.smf.authenticator.api.SmsSender;
+import de.smf.authenticator.config.FallbackRegionResolver;
 import de.smf.authenticator.config.SmsConstants;
 import de.smf.authenticator.config.SmsProviderConfig;
 import de.smf.authenticator.otp.OtpChallengeService;
@@ -37,6 +38,7 @@ public class SmsAuthenticator implements Authenticator {
     private final SmsSender smsSender;
     private final PhoneNumberService phoneNumberService;
     private final OtpChallengeService otpChallengeService;
+    private final FallbackRegionResolver fallbackRegionResolver;
 
     public SmsAuthenticator(KeycloakSession session) {
         this(new GatewayAPIRestClient(session), new PhoneNumberService(), new OtpChallengeService());
@@ -46,11 +48,22 @@ public class SmsAuthenticator implements Authenticator {
         this(smsSender, new PhoneNumberService(), new OtpChallengeService());
     }
 
+    SmsAuthenticator(SmsSender smsSender, FallbackRegionResolver fallbackRegionResolver) {
+        this(smsSender, new PhoneNumberService(), new OtpChallengeService(), fallbackRegionResolver);
+    }
+
     SmsAuthenticator(SmsSender smsSender, PhoneNumberService phoneNumberService,
                      OtpChallengeService otpChallengeService) {
+        this(smsSender, phoneNumberService, otpChallengeService, new FallbackRegionResolver());
+    }
+
+    SmsAuthenticator(SmsSender smsSender, PhoneNumberService phoneNumberService,
+                     OtpChallengeService otpChallengeService,
+                     FallbackRegionResolver fallbackRegionResolver) {
         this.smsSender = smsSender;
         this.phoneNumberService = phoneNumberService;
         this.otpChallengeService = otpChallengeService;
+        this.fallbackRegionResolver = fallbackRegionResolver;
     }
 
     @Override
@@ -62,7 +75,7 @@ public class SmsAuthenticator implements Authenticator {
             KeycloakSession session = context.getSession();
             UserModel user = context.getUser();
             NormalizedPhoneNumber mobileNumber = phoneNumberService.normalize(
-                    user.getFirstAttribute(PHONE_NUMBER), config.getDefaultRegion());
+                    user.getFirstAttribute(PHONE_NUMBER), fallbackRegion(context.getRealm()));
             OtpChallengeService.Challenge challenge =
                     otpChallengeService.createChallenge(authSession, OTP_PREFIX, config);
 
@@ -133,12 +146,20 @@ public class SmsAuthenticator implements Authenticator {
     @Override
     public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user) {
         try {
-            phoneNumberService.normalize(user.getFirstAttribute(PHONE_NUMBER), SmsProviderConfig.DEFAULT_REGION);
+            phoneNumberService.normalize(user.getFirstAttribute(PHONE_NUMBER), fallbackRegion(realm));
             return true;
         } catch (IllegalArgumentException e) {
             log.warn("User {} has invalid phone number: {}", user.getId(), e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Both this check and {@link #authenticate} must resolve the region the same way, otherwise a
+     * user could pass {@code configuredFor} and then have the code sent to the wrong country.
+     */
+    private String fallbackRegion(RealmModel realm) {
+        return fallbackRegionResolver.resolve(realm == null ? null : realm.getName());
     }
 
     @Override

@@ -1,9 +1,11 @@
 package de.smf.authenticator;
 
 import de.smf.authenticator.api.SmsSender;
+import de.smf.authenticator.config.FallbackRegionResolver;
 import de.smf.authenticator.config.SmsConstants;
 import de.smf.authenticator.config.SmsProviderConfig;
 import de.smf.authenticator.otp.OtpChallengeService;
+import de.smf.authenticator.phone.InvalidFallbackRegionException;
 import de.smf.authenticator.phone.PhoneNumberService;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
@@ -11,6 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.forms.login.LoginFormsProvider;
@@ -195,19 +199,213 @@ class SmsAuthenticatorTest {
         assertFalse(authenticator.configuredFor(mock(KeycloakSession.class), mock(RealmModel.class), user));
     }
 
+    @Test
+    void configuredFor_userHasNationalPhoneNumberWithoutCountryCode_returnsTrue() {
+        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("0151 12345678");
+        assertTrue(authenticator.configuredFor(mock(KeycloakSession.class), mock(RealmModel.class), user));
+    }
+
+    /** {@code 06 12345678} is a valid number in DE and NL, but not in AT. */
+    @Test
+    void configuredFor_fallbackRegionFromEnvironment_isApplied() {
+        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+
+        assertTrue(withEnvironment(Map.of())
+                .configuredFor(mock(KeycloakSession.class), realm("master"), user));
+        assertFalse(withEnvironment(Map.of("SMS_FALLBACK_REGION", "AT"))
+                .configuredFor(mock(KeycloakSession.class), realm("master"), user));
+    }
+
+    @Test
+    void configuredFor_realmSpecificFallbackRegion_isApplied() {
+        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+        var env = Map.of(
+                "SMS_FALLBACK_REGION", "NL",
+                "SMS_FALLBACK_REGION_austria", "AT");
+
+        assertTrue(withEnvironment(env).configuredFor(mock(KeycloakSession.class), realm("master"), user));
+        assertFalse(withEnvironment(env).configuredFor(mock(KeycloakSession.class), realm("austria"), user));
+    }
+
+    @Test
+    void authenticate_fallbackRegionFromEnvironment_determinesRecipientCountry() throws Exception {
+        stubAuthenticateHappyPath();
+        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+
+        withEnvironment(Map.of("SMS_FALLBACK_REGION", "NL")).authenticate(context);
+
+        verify(smsSender).sendViaSms(any(), eq(31612345678L), anyString());
+    }
+
+    @Test
+    void authenticate_realmSpecificFallbackRegion_overridesGlobalOne() throws Exception {
+        stubAuthenticateHappyPath();
+        RealmModel dutch = realm("dutch-realm");
+        when(context.getRealm()).thenReturn(dutch);
+        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+
+        withEnvironment(Map.of(
+                "SMS_FALLBACK_REGION", "DE",
+                "SMS_FALLBACK_REGION_DUTCH_REALM", "NL")).authenticate(context);
+
+        verify(smsSender).sendViaSms(any(), eq(31612345678L), anyString());
+    }
+
+    @Test
+    void authenticate_fallbackRegionUnset_defaultsToGermany() throws Exception {
+        stubAuthenticateHappyPath();
+        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+
+        withEnvironment(Map.of()).authenticate(context);
+
+        verify(smsSender).sendViaSms(any(), eq(49612345678L), anyString());
+    }
+
+    /**
+     * The same value must drive both {@code configuredFor} and the login flow, otherwise a user
+     * could pass the check and then have the code sent to the wrong country.
+     */
+    @Test
+    void configuredForAndAuthenticate_agreeOnRealmSpecificFallbackRegion() throws Exception {
+        stubAuthenticateHappyPath();
+        RealmModel dutch = realm("dutch-realm");
+        when(context.getRealm()).thenReturn(dutch);
+        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+        SmsAuthenticator subject = withEnvironment(Map.of(
+                "SMS_FALLBACK_REGION", "AT",
+                "SMS_FALLBACK_REGION_dutch-realm", "NL"));
+
+        assertTrue(subject.configuredFor(mock(KeycloakSession.class), dutch, user));
+
+        subject.authenticate(context);
+
+        verify(smsSender).sendViaSms(any(), eq(31612345678L), anyString());
+        verify(context, never()).failureChallenge(any(), any());
+    }
+
+    /**
+     * The dangerous failure mode: if a misconfigured region were reported like an unusable phone
+     * number, {@code configuredFor} would answer {@code false} and Keycloak would skip the SMS
+     * step — a typo in one environment variable would switch off two-factor authentication.
+     */
+    @Test
+    void configuredFor_invalidFallbackRegion_failsInsteadOfSkippingTheStep() {
+        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn(PHONE_NUMBER_RAW);
+        SmsAuthenticator subject = withEnvironment(Map.of("SMS_FALLBACK_REGION", "XX"));
+
+        assertThrows(InvalidFallbackRegionException.class,
+                () -> subject.configuredFor(mock(KeycloakSession.class), realm("master"), user));
+    }
+
+    @Test
+    void authenticate_invalidFallbackRegion_failsWithoutSendingAnSms() throws Exception {
+        stubAuthenticateHappyPath();
+
+        withEnvironment(Map.of("SMS_FALLBACK_REGION", "XX")).authenticate(context);
+
+        verify(smsSender, never()).sendViaSms(any(), anyLong(), anyString());
+        verify(context).failureChallenge(eq(AuthenticationFlowError.INTERNAL_ERROR), any());
+        verify(context, never()).challenge(any());
+    }
+
+    @Test
+    void fallbackRegion_isReadPerCall_soEnvironmentChangesTakeEffect() {
+        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+        Map<String, String> env = new HashMap<>(Map.of("SMS_FALLBACK_REGION", "NL"));
+        SmsAuthenticator subject = new SmsAuthenticator(smsSender, new FallbackRegionResolver(env::get));
+
+        assertTrue(subject.configuredFor(mock(KeycloakSession.class), realm("master"), user));
+        env.put("SMS_FALLBACK_REGION", "AT");
+        assertFalse(subject.configuredFor(mock(KeycloakSession.class), realm("master"), user));
+    }
+
+    private SmsAuthenticator withEnvironment(Map<String, String> environment) {
+        return new SmsAuthenticator(smsSender, new FallbackRegionResolver(environment::get));
+    }
+
+    private RealmModel realm(String name) {
+        RealmModel realm = mock(RealmModel.class);
+        when(realm.getName()).thenReturn(name);
+        return realm;
+    }
+
     @ParameterizedTest
     @CsvSource({
             "'+4915112345678',    '+4915112345678', '4915112345678'",
             "'+49 151 12345678',  '+4915112345678', '4915112345678'",
-            "'015112345678',      '+4915112345678', '4915112345678'",
-            "'0151 12345678',     '+4915112345678', '4915112345678'",
-            "'+1 415 555 2671',   '+14155552671',   '14155552671'"
+            "'  +4915112345678 ', '+4915112345678', '4915112345678'",
+            "'+49 (0)151 1234 5678', '+4915112345678', '4915112345678'",
+            "'+1 415 555 2671',   '+14155552671',   '14155552671'",
+            "'+43 664 1234567',   '+436641234567',  '436641234567'"
     })
     void phoneNumberService_normalizesToE164AndGatewayRecipient(String input, String e164, long gatewayRecipient) {
         var normalized = new PhoneNumberService().normalize(input, "DE");
 
         assertEquals(e164, normalized.e164());
         assertEquals(gatewayRecipient, normalized.gatewayRecipient());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "'015112345678',    '+4915112345678', '4915112345678'",
+            "'0151 12345678',   '+4915112345678', '4915112345678'",
+            "'0151/12345678',   '+4915112345678', '4915112345678'",
+            "'004915112345678', '+4915112345678', '4915112345678'"
+    })
+    void phoneNumberService_numberWithoutCountryCode_usesFallbackRegion(
+            String input, String e164, long gatewayRecipient) {
+        var normalized = new PhoneNumberService().normalize(input, "DE");
+
+        assertEquals(e164, normalized.e164());
+        assertEquals(gatewayRecipient, normalized.gatewayRecipient());
+    }
+
+    @Test
+    void phoneNumberService_fallbackRegionIsApplied() {
+        var normalized = new PhoneNumberService().normalize("0664 1234567", "AT");
+
+        assertEquals("+436641234567", normalized.e164());
+    }
+
+    @Test
+    void phoneNumberService_fallbackRegionIsCaseInsensitive() {
+        assertEquals("+436641234567", new PhoneNumberService().normalize("0664 1234567", "at").e164());
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = "   ")
+    void phoneNumberService_unconfiguredFallbackRegion_fallsBackToDefault(String fallbackRegion) {
+        var normalized = new PhoneNumberService().normalize("0151 12345678", fallbackRegion);
+
+        assertEquals("+4915112345678", normalized.e164());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"XX", "germany", "D", "DEU", "49"})
+    void phoneNumberService_invalidFallbackRegion_throws(String fallbackRegion) {
+        assertThrows(InvalidFallbackRegionException.class,
+                () -> new PhoneNumberService().normalize("0151 12345678", fallbackRegion));
+    }
+
+    /** A broken configuration must surface even when no number currently depends on it. */
+    @Test
+    void phoneNumberService_invalidFallbackRegion_throwsEvenForE164Input() {
+        assertThrows(InvalidFallbackRegionException.class,
+                () -> new PhoneNumberService().normalize("+4915112345678", "XX"));
+    }
+
+    @Test
+    void phoneNumberService_fallbackRegionIsIgnoredForE164Input() {
+        var normalized = new PhoneNumberService().normalize("+4915112345678", "AT");
+
+        assertEquals("+4915112345678", normalized.e164());
+    }
+
+    @Test
+    void phoneNumberService_invalidNumberForItsCountryCode_throws() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new PhoneNumberService().normalize("+49 1", "DE"));
     }
 
     @Test
@@ -291,7 +489,6 @@ class SmsAuthenticatorTest {
         config.put(SmsConstants.CONFIG_CODE_LENGTH, "6");
         config.put(SmsConstants.CONFIG_CODE_TTL, "300");
         config.put(SmsConstants.CONFIG_SENDER_ID, "Test");
-        config.put(SmsConstants.CONFIG_DEFAULT_REGION, "DE");
         config.put(SmsConstants.CONFIG_MAX_ATTEMPTS, "5");
         config.put(SmsConstants.CONFIG_RESEND_COOLDOWN, "0");
         config.putAll(overrides);
