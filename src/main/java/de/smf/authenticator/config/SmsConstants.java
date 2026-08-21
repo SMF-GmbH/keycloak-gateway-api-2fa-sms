@@ -6,9 +6,8 @@ package de.smf.authenticator.config;
  */
 public final class SmsConstants {
     /**
-     * Environment variable holding the ISO 3166-1 alpha-2 region used for phone numbers stored
-     * without a country code, optionally suffixed with a realm name. Read from the environment
-     * rather than the execution config because it must also be available to
+     * Base name of the fallback-region environment variables. Read from the environment rather
+     * than the execution config because the region must also be available to
      * {@code configuredFor}, which is not handed an authenticator config.
      *
      * @see FallbackRegionResolver

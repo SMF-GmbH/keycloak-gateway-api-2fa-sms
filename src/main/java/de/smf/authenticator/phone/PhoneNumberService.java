@@ -11,14 +11,8 @@ import java.util.Locale;
  * them to a {@link NormalizedPhoneNumber}.
  *
  * <p>Numbers that carry their own country code in E.164 notation (leading {@code +}) are parsed
- * without any region hint. National notations such as {@code 0151 12345678} are interpreted
- * against the fallback region passed by the caller, defaulting to {@link #DEFAULT_FALLBACK_REGION}
- * when none is configured. A configured-but-unknown region is a misconfiguration and raises
- * {@link InvalidFallbackRegionException} rather than quietly reverting to the default.
- *
- * <p>Callers must derive that fallback from a source available on every code path — see
- * {@code SmsConstants.ENV_FALLBACK_REGION}. If the login flow and the {@code configuredFor} check
- * resolved it differently, they would disagree on whether a user's number is usable.
+ * without any region hint; national notations such as {@code 0151 12345678} are interpreted
+ * against the fallback region passed by the caller.
  */
 public class PhoneNumberService {
     /**
@@ -71,9 +65,8 @@ public class PhoneNumberService {
     }
 
     /**
-     * Validated eagerly, whether or not the number in hand actually needs it, so that a broken
-     * configuration surfaces on the next login instead of lying dormant until the first user
-     * stores a number without a country code.
+     * Called before {@code raw} is looked at on purpose: a broken configuration must surface even
+     * when the number in hand would not have needed the fallback at all.
      */
     private String resolveFallbackRegion(String fallbackRegion) {
         if (fallbackRegion == null || fallbackRegion.isBlank()) {

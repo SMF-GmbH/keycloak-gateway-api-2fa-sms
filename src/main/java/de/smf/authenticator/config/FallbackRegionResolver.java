@@ -5,23 +5,12 @@ import java.util.function.UnaryOperator;
 
 /**
  * Resolves the region used for phone numbers stored without a country code, from the environment
- * of the Keycloak server.
+ * of the Keycloak server. The variable names and their precedence are documented under "Fallback
+ * region" in {@code README.md}.
  *
- * <p>Lookup order, first non-blank value wins:
- * <ol>
- *   <li>{@code SMS_FALLBACK_REGION_<realmName>} — the realm name verbatim, e.g.
- *       {@code SMS_FALLBACK_REGION_master}</li>
- *   <li>{@code SMS_FALLBACK_REGION_<REALM_NAME>} — the realm name uppercased with every character
- *       outside {@code [A-Za-z0-9]} replaced by {@code _}, e.g. {@code SMS_FALLBACK_REGION_ACME_PROD}
- *       for the realm {@code acme-prod}. Realm names may contain characters that a POSIX shell
- *       cannot put in a variable name, so the verbatim form alone is not always settable.</li>
- *   <li>{@code SMS_FALLBACK_REGION} — the server-wide default</li>
- * </ol>
- *
- * <p>Returns {@code null} when nothing is set; {@code PhoneNumberService.normalize} then applies
- * its own default. Values are not validated here, only where the region is used — a set but
- * unknown region is a misconfiguration and fails the login there rather than being silently
- * replaced by the default.
+ * <p>Returns {@code null} when nothing is set and does not validate what it finds:
+ * {@code PhoneNumberService.normalize} applies the default and rejects an unknown region, so
+ * neither decision is made in two places.
  */
 public class FallbackRegionResolver {
     private final UnaryOperator<String> environment;

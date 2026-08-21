@@ -80,9 +80,9 @@ The first variable that is set and non-blank wins:
 | `SMS_FALLBACK_REGION_<REALM_NAME>` | The named realm, uppercased with every character outside `A–Z`/`0–9` replaced by `_` — e.g. `SMS_FALLBACK_REGION_ACME_PROD` for the realm `acme-prod`. Use this form for realm names a shell cannot put in a variable name. |
 | `SMS_FALLBACK_REGION` | All realms on the server. |
 
-If none is set — or the value is blank — the region defaults to `DE`. A value that *is* set but is not a region libphonenumber knows (`XX`, `germany`, `DEU`) is treated as a misconfiguration: the SMS step fails with an internal error and logs `InvalidFallbackRegionException`. It is validated on every login, whether or not any number currently needs it, so a typo shows up immediately.
+If none is set, or the value is blank, the region defaults to `DE`. A value that *is* set but is not a region libphonenumber knows (`XX`, `germany`, `DEU`) is treated as a misconfiguration: the SMS step fails with an internal error and logs `InvalidFallbackRegionException`. It is validated on every login, so a typo shows up immediately.
 
-Failing is deliberate here. Falling back to `DE` on a typo would send codes to the wrong country, and answering "this user has no usable number" would make Keycloak *skip* the SMS step — one mistyped variable would quietly switch off two-factor authentication. Lower-case values (`at`) are fine; only unknown regions fail.
+Failing is deliberate here. Falling back to `DE` on a typo would send codes to the wrong country, and answering "this user has no usable number" would make Keycloak *skip* the SMS step. Lower-case values (`at`) are fine; only unknown regions fail.
 
 ```yaml
 services:
@@ -92,9 +92,8 @@ services:
       SMS_FALLBACK_REGION_ACME_AT: AT  # realm "acme-at"
 ```
 
-Configuration lives in the environment rather than in the execution config on purpose: `Authenticator.configuredFor` — which decides whether the SMS step applies to a user at all — is not handed an authenticator config, but it does get the realm. Resolving the region the same way in both places is what keeps that check and the login flow in agreement; if they disagreed, a user could pass the check and then have the code sent to the wrong country.
-
 Changing a value needs a server restart. If a single realm serves users across several countries, store their numbers in E.164 (`+43…`) instead of relying on this fallback.
+
 ## Customizing messages
 
 User-facing text lives in `src/main/resources/theme-resources/messages/messages_*.properties` and the login form in `src/main/resources/theme-resources/templates/login-sms.ftl`. Add additional `messages_<locale>.properties` files to support more languages, and package the theme resources into your Keycloak theme to customize the look and feel.
