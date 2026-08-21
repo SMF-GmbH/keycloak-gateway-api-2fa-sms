@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 
-import static org.keycloak.representations.IDToken.PHONE_NUMBER;
+import static de.smf.authenticator.config.SmsConstants.USER_ATTRIBUTE_PHONE_NUMBER;
 
 /**
  * Keycloak {@link Authenticator} that challenges the user with an OTP code sent via SMS.
@@ -75,7 +75,7 @@ public class SmsAuthenticator implements Authenticator {
             KeycloakSession session = context.getSession();
             UserModel user = context.getUser();
             NormalizedPhoneNumber mobileNumber = phoneNumberService.normalize(
-                    user.getFirstAttribute(PHONE_NUMBER), fallbackRegion(context.getRealm()));
+                    user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER), fallbackRegion(context.getRealm()));
             OtpChallengeService.Challenge challenge =
                     otpChallengeService.createChallenge(authSession, OTP_PREFIX, config);
 
@@ -146,7 +146,7 @@ public class SmsAuthenticator implements Authenticator {
     @Override
     public boolean configuredFor(KeycloakSession session, RealmModel realm, UserModel user) {
         try {
-            phoneNumberService.normalize(user.getFirstAttribute(PHONE_NUMBER), fallbackRegion(realm));
+            phoneNumberService.normalize(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER), fallbackRegion(realm));
             return true;
         } catch (IllegalArgumentException e) {
             log.warn("User {} has invalid phone number: {}", user.getId(), e.getMessage());

@@ -33,11 +33,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
+import static de.smf.authenticator.config.SmsConstants.USER_ATTRIBUTE_PHONE_NUMBER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.keycloak.representations.IDToken.PHONE_NUMBER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -183,32 +183,38 @@ class SmsAuthenticatorTest {
 
     @Test
     void configuredFor_userHasPhoneNumber_returnsTrue() {
-        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn(PHONE_NUMBER_RAW);
+        when(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER)).thenReturn(PHONE_NUMBER_RAW);
+        assertTrue(authenticator.configuredFor(mock(KeycloakSession.class), mock(RealmModel.class), user));
+    }
+
+    @Test
+    void configuredFor_readsCamelCaseAttributeStoredByKeycloak() {
+        when(user.getFirstAttribute("phoneNumber")).thenReturn(PHONE_NUMBER_RAW);
         assertTrue(authenticator.configuredFor(mock(KeycloakSession.class), mock(RealmModel.class), user));
     }
 
     @Test
     void configuredFor_userMissingPhoneNumber_returnsFalse() {
-        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn(null);
+        when(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER)).thenReturn(null);
         assertFalse(authenticator.configuredFor(mock(KeycloakSession.class), mock(RealmModel.class), user));
     }
 
     @Test
     void configuredFor_userHasInvalidPhoneNumber_returnsFalse() {
-        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("not-a-number");
+        when(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER)).thenReturn("not-a-number");
         assertFalse(authenticator.configuredFor(mock(KeycloakSession.class), mock(RealmModel.class), user));
     }
 
     @Test
     void configuredFor_userHasNationalPhoneNumberWithoutCountryCode_returnsTrue() {
-        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("0151 12345678");
+        when(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER)).thenReturn("0151 12345678");
         assertTrue(authenticator.configuredFor(mock(KeycloakSession.class), mock(RealmModel.class), user));
     }
 
     /** {@code 06 12345678} is a valid number in DE and NL, but not in AT. */
     @Test
     void configuredFor_fallbackRegionFromEnvironment_isApplied() {
-        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+        when(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER)).thenReturn("06 12345678");
 
         assertTrue(withEnvironment(Map.of())
                 .configuredFor(mock(KeycloakSession.class), realm("master"), user));
@@ -218,7 +224,7 @@ class SmsAuthenticatorTest {
 
     @Test
     void configuredFor_realmSpecificFallbackRegion_isApplied() {
-        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+        when(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER)).thenReturn("06 12345678");
         var env = Map.of(
                 "SMS_FALLBACK_REGION", "NL",
                 "SMS_FALLBACK_REGION_austria", "AT");
@@ -230,7 +236,7 @@ class SmsAuthenticatorTest {
     @Test
     void authenticate_fallbackRegionFromEnvironment_determinesRecipientCountry() throws Exception {
         stubAuthenticateHappyPath();
-        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+        when(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER)).thenReturn("06 12345678");
 
         withEnvironment(Map.of("SMS_FALLBACK_REGION", "NL")).authenticate(context);
 
@@ -242,7 +248,7 @@ class SmsAuthenticatorTest {
         stubAuthenticateHappyPath();
         RealmModel dutch = realm("dutch-realm");
         when(context.getRealm()).thenReturn(dutch);
-        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+        when(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER)).thenReturn("06 12345678");
 
         withEnvironment(Map.of(
                 "SMS_FALLBACK_REGION", "DE",
@@ -254,7 +260,7 @@ class SmsAuthenticatorTest {
     @Test
     void authenticate_fallbackRegionUnset_defaultsToGermany() throws Exception {
         stubAuthenticateHappyPath();
-        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+        when(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER)).thenReturn("06 12345678");
 
         withEnvironment(Map.of()).authenticate(context);
 
@@ -270,7 +276,7 @@ class SmsAuthenticatorTest {
         stubAuthenticateHappyPath();
         RealmModel dutch = realm("dutch-realm");
         when(context.getRealm()).thenReturn(dutch);
-        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+        when(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER)).thenReturn("06 12345678");
         SmsAuthenticator subject = withEnvironment(Map.of(
                 "SMS_FALLBACK_REGION", "AT",
                 "SMS_FALLBACK_REGION_dutch-realm", "NL"));
@@ -290,7 +296,7 @@ class SmsAuthenticatorTest {
      */
     @Test
     void configuredFor_invalidFallbackRegion_failsInsteadOfSkippingTheStep() {
-        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn(PHONE_NUMBER_RAW);
+        when(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER)).thenReturn(PHONE_NUMBER_RAW);
         SmsAuthenticator subject = withEnvironment(Map.of("SMS_FALLBACK_REGION", "XX"));
 
         assertThrows(InvalidFallbackRegionException.class,
@@ -310,7 +316,7 @@ class SmsAuthenticatorTest {
 
     @Test
     void fallbackRegion_isReadPerCall_soEnvironmentChangesTakeEffect() {
-        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn("06 12345678");
+        when(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER)).thenReturn("06 12345678");
         Map<String, String> env = new HashMap<>(Map.of("SMS_FALLBACK_REGION", "NL"));
         SmsAuthenticator subject = new SmsAuthenticator(smsSender, new FallbackRegionResolver(env::get));
 
@@ -448,7 +454,7 @@ class SmsAuthenticatorTest {
         when(theme.getMessages(any(Locale.class))).thenReturn(messages);
         when(keycloakCtx.resolveLocale(user)).thenReturn(Locale.ENGLISH);
 
-        when(user.getFirstAttribute(PHONE_NUMBER)).thenReturn(PHONE_NUMBER_RAW);
+        when(user.getFirstAttribute(USER_ATTRIBUTE_PHONE_NUMBER)).thenReturn(PHONE_NUMBER_RAW);
         when(context.getRealm()).thenReturn(mock(RealmModel.class));
     }
 

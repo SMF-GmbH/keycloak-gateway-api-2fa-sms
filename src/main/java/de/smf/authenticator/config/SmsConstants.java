@@ -14,6 +14,12 @@ public final class SmsConstants {
      */
     public static final String ENV_FALLBACK_REGION = "SMS_FALLBACK_REGION";
 
+    /**
+     * User attribute holding the mobile number the OTP is sent to. Keycloak stores it in
+     * camel case, unlike the snake-case {@code phone_number} claim of the OIDC standard.
+     */
+    public static final String USER_ATTRIBUTE_PHONE_NUMBER = "phoneNumber";
+
     public static final String AUTHNOTE_CODE = "code";
     public static final String CONFIG_CODE_LENGTH = "length";
     public static final String CONFIG_CODE_TTL = "ttl";
