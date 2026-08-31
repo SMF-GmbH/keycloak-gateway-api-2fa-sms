@@ -63,7 +63,7 @@ These options are set on the authentication execution's config in the Admin Cons
 | API Token | `apiToken` | *(required)* | Token used to authenticate with the SMS gateway, sent as `Authorization: Token <apiToken>`. |
 | Code length | `length` | `8` | Number of digits in the generated OTP (6–10). |
 | Time-to-live (seconds) | `ttl` | `250` | How long a generated code remains valid (60–600). |
-| Sender ID | `senderId` | `SMF GmbH` | Sender name shown on the recipient's device. |
+| Sender ID | `senderId` | *(required)* | Sender name shown on the recipient's device. |
 | Maximum attempts | `maxAttempts` | `5` | Number of invalid submissions allowed before the code is invalidated (1–10). |
 | Resend cooldown (seconds) | `resendCooldown` | `20` | Minimum wait time before another SMS may be sent (0–600). |
 | Debug mode | `debugMode` | `false` | If enabled, no SMS is sent — the OTP is written to the server log as `<username>/<otp>` instead. **Do not enable in production.** |
