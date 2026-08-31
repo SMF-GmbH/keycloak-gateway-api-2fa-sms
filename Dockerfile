@@ -9,6 +9,6 @@ COPY src src
 
 RUN mvn clean package
 
-FROM quay.io/keycloak/keycloak:26.7.2
+FROM quay.io/keycloak/keycloak:26.7.3
 
 COPY --from=build /build/target/de.smf-SmsAuthenticator.jar /opt/keycloak/providers/
