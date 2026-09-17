@@ -49,7 +49,7 @@ This produces a shaded JAR at `target/de.smf-SmsAuthenticator.jar` (the `libphon
 5. Click the gear icon next to the step to configure it (see below).
 6. Set the step's requirement to **Required** (or **Alternative**, if it sits next to other second-factor options).
 
-Users must have a valid phone number set in the `phoneNumber` attribute of their account for this step to apply (`configuredFor` returns `false`, and the step is skipped, if the attribute is missing or fails phone number validation).
+Users must have a valid phone number set in the `phoneNumber` attribute of their account for this step to apply (`configuredFor` returns `false`, and the step is skipped, if the attribute is missing or fails phone number validation). `phoneNumber` is not part of Keycloak's default user profile, so declare it as an attribute under **Realm settings** → **User profile** before setting it on any user.
 
 Numbers carrying their own country code (`+4915112345678`, `+49 151 12345678`) are used as given. Numbers without one (`0151 12345678`, `004915112345678`) are interpreted against the realm's fallback region — see below.
 
