@@ -11,7 +11,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>21</maven.compiler.release>
-        <keycloak.version>26.8.0</keycloak.version>
+        <keycloak.version>26.8.1</keycloak.version>
         <maven.compiler.version>3.16.0</maven.compiler.version>
         <maven.surefire.version>3.6.0</maven.surefire.version>
     </properties>
@@ -38,7 +38,7 @@
         <dependency>
             <groupId>com.googlecode.libphonenumber</groupId>
             <artifactId>libphonenumber</artifactId>
-            <version>9.0.40</version>
+            <version>9.0.41</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

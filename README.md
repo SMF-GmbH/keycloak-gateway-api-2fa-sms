@@ -27,7 +27,7 @@ SMS gateway.
 
 - Java 21
 - Maven 3.9+
-- Keycloak 26.8.0 (server-side dependencies are `provided` scope)
+- Keycloak 26.8.1 (server-side dependencies are `provided` scope)
 
 ## Building
 
